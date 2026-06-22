@@ -1,62 +1,116 @@
-# AI Agent Loop
+# Lev
 
-一个轻量的 agent loop 核心模块，支持工具调用（网络搜索、网页阅读）。
+Lev is a human-centered agent MVP for a live document workspace.
 
-## 功能
+It opens a local project folder, lets the user write in a document, observes the document changes, infers the user's current intent, and shows quiet assistance in a read-only side panel. Lev intentionally has no chat input in the main UI.
 
-- **Agent Loop**: 自动处理 LLM 的工具调用，最多循环 5 次
-- **Web Search**: 使用 Tavily 搜索引擎搜索网络信息
-- **Read Page**: 获取网页内容并提取纯文本
+## Product Principle
 
-## 项目结构
+Lev is not trying to replace the user's subject action. In this MVP, the subject action is writing and thinking inside a document. Lev should prepare context,
+surface useful references, expose friction, and suggest small next moves without
+taking over the document.
 
+The shortest design rule is:
+
+> Do not complete the user's meaningful action. Arrange the workspace so the
+> user can complete it more smoothly.
+
+## What The MVP Does
+
+- Opens a folder as a Lev workspace.
+- Lists `.md` and `.txt` documents in that workspace.
+- Provides a two-pane workbench:
+  - left: editable document
+  - right: read-only Lev assistance
+- Autosaves the active document.
+- Sends document diffs, cursor position, and selection offsets to the agent.
+- Reuses the existing agent loop and search/page-reading tools.
+- Falls back to local diff/cursor-context assistance if the model or API key is
+  unavailable.
+
+## Project Structure
+
+```text
+client.py                 AI Builders Space client
+tools.py                  web_search and read_page tools
+main.py                   original one-shot agent loop CLI
+
+lev/
+  assist.py               document-change -> prompt -> assistance
+  models.py               dataclass request/response models
+  server.py               no-dependency local HTTP server
+  workspace.py            local document listing/read/write
+
+web/
+  index.html              Lev workbench shell
+  app.js                  autosave, cursor tracking, assistance requests
+  styles.css              two-pane UI
+
+docs/
+  lev-mvp.md              MVP behavior and evaluation
+  editor-decision.md      editor/fork decision
 ```
-client.py        - AI Builders Space API 配置和客户端
-tools.py         - 工具函数定义（web_search, read_page）和 Function Schema
-main.py          - 核心 agent loop 与 CLI 入口
-.env             - 环境变量配置（BUILDER_API_KEY）
-```
 
-## 快速开始
-
-### 1. 安装依赖
+## Setup
 
 ```bash
-uv pip install openai python-dotenv httpx beautifulsoup4 lxml pydantic
+uv sync
 ```
 
-### 2. 配置环境变量
+Create `.env` in this folder:
 
-在 `my-agent-loop/` 目录下创建 `.env` 文件：
-
-```
+```text
 BUILDER_API_KEY=your_api_key_here
 ```
 
-`client.py` 会显式读取这个本地 `.env` 文件。
+`client.py` reads this local `.env` file.
 
-### 3. 运行一次 agent loop
+## Run Lev
+
+Open the current repository as the workspace:
 
 ```bash
-python main.py "Who won the Super Bowl 2025?"
+uv run python -m lev.server .
 ```
 
-### 4. 作为模块导入
+Then open:
 
-```python
-from main import ChatRequest, chat
-
-response = chat(ChatRequest(message="Search for the latest Python release."))
-print(response.response)
+```text
+http://127.0.0.1:8787
 ```
 
-## 示例对话
+Open another folder as the workspace:
 
-- "Who won the Super Bowl 2025?" → 自动搜索网络并返回答案
-- "Search for the latest release of Python, then read the official changelog page to tell me the new features." → 搜索 + 读网页 + 总结
+```bash
+uv run python -m lev.server /path/to/project
+```
 
-## 技术栈
+Change the port if needed:
 
-- **AI API**: AI Builders Space (https://space.ai-builders.com/backend/v1)
-- **Runtime**: Python module + CLI
-- **Tools**: Tavily Search, BeautifulSoup
+```bash
+uv run python -m lev.server . --port 8790
+```
+
+## Keep The Original Agent Loop
+
+The original one-shot CLI still works:
+
+```bash
+uv run python main.py "Search for the latest Python release."
+```
+
+Lev uses that loop as a lower-level capability. The new HC layer changes the
+entrypoint from "user prompt" to "human activity inside a document".
+
+## Editor Direction
+
+The MVP uses a native `<textarea>` behind a small frontend boundary. This keeps
+the first version dependency-free and easy to run.
+
+For the next step, use CodeMirror 6 rather than forking a full editor product.
+CodeMirror is much lighter than Monaco, has first-class document state,
+selection, cursor, transactions, decorations, and programmatic scrolling, and
+fits Lev's document-workbench shape. Monaco is excellent for code-IDE behavior
+but is a heavier starting point for this writing/research MVP.
+
+See [docs/editor-decision.md](docs/editor-decision.md).
