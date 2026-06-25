@@ -4,6 +4,13 @@ Lev is a human-centered agent MVP for a live document workspace.
 
 It opens a local project folder, lets the user write in a document, observes the document changes, infers the user's current intent, and shows quiet assistance in a read-only side panel. Lev intentionally has no chat input in the main UI.
 
+## Product Demo
+
+Lev keeps the user's main action in the document editor and surfaces quiet,
+read-only assistance beside it.
+
+<img src="docs/demo/lev-workbench.png" alt="Lev document workspace with an editor pane and a read-only assistance pane" width="960">
+
 ## Product Principle
 
 Lev is not trying to replace the user's subject action. In this MVP, the subject action is writing and thinking inside a document. Lev should prepare context,
