@@ -15,7 +15,8 @@ read-only assistance beside it.
 
 Lev is not trying to replace the user's subject action. In this MVP, the subject action is writing and thinking inside a document. Lev should prepare context,
 surface useful references, expose friction, and suggest small next moves without
-taking over the document.
+taking over the document. 
+
 
 The shortest design rule is:
 
