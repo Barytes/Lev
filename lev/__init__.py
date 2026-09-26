@@ -1,2 +1,0 @@
-"""Lev MVP package."""
-
